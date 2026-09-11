@@ -24,11 +24,11 @@ Student payloads are never committed. Status files record HTTP codes, latency, a
 
 <!-- registry:start -->
 
-_Last checked: 2026-09-11T03:14:37Z (UTC)._
+_Last checked: 2026-09-11T03:25:23Z (UTC)._
 
 | Service | Status | Auth | Method | Endpoint | Notes |
 |---|---|---|---|---|---|
-| Degree Explorer | ![operational](https://img.shields.io/badge/operational-brightgreen) | UTORid | GET | [`/dxStudent/getAcademicHistory`](https://degreeexplorer.utoronto.ca/degreeExplorer/rest/dxStudent/getAcademicHistory) | Unofficial. Student academic history and planner. Undocumented internal web API, not a supported public contract. Open the site root; after UTORauth/Duo the app redirects to Current Status, then REST calls work from that session. |
+| Degree Explorer | ![auth required](https://img.shields.io/badge/auth_required-blue) | UTORid | GET | [`/dxStudent/getAcademicHistory`](https://degreeexplorer.utoronto.ca/degreeExplorer/rest/dxStudent/getAcademicHistory) | Unofficial. Student academic history and planner. Undocumented internal web API, not a supported public contract. Open the site root; after UTORauth/Duo the app redirects to Current Status, then REST calls work from that session. |
 | Timetable Builder (TTB) | ![operational](https://img.shields.io/badge/operational-brightgreen) | None | GET | [`/current-session`](https://api.easi.utoronto.ca/ttb/current-session) | Unofficial. Course schedules, timetable sections, room assignments, and instructors. Public and unauthenticated. |
 
 <!-- registry:end -->

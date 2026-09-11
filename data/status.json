@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-09-11T03:14:37Z",
+  "checked_at": "2026-09-11T03:25:23Z",
   "results": [
     {
       "id": "degree-explorer",
@@ -11,10 +11,10 @@
       "path": "/dxStudent/getAcademicHistory",
       "url": "https://degreeexplorer.utoronto.ca/degreeExplorer/rest/dxStudent/getAcademicHistory",
       "human_url": "https://degreeexplorer.utoronto.ca/",
-      "status": "operational",
-      "status_code": 200,
-      "latency_ms": 20365,
-      "detail": "Authenticated GET /dxStudent/getAcademicHistory returned JSON."
+      "status": "auth_required",
+      "status_code": 302,
+      "latency_ms": 248,
+      "detail": "Service is reachable via UTORauth. Authenticated probe did not finish: UTORauth asked for Duo. GitHub Actions cannot complete MFA."
     },
     {
       "id": "timetable-builder",
@@ -28,7 +28,7 @@
       "human_url": "https://ttb.utoronto.ca/",
       "status": "operational",
       "status_code": 200,
-      "latency_ms": 49,
+      "latency_ms": 177,
       "detail": "GET /current-session returned HTTP 200."
     }
   ]
