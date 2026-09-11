@@ -1,5 +1,7 @@
 # Unofficial UofT API Registry
 
+> **Work in progress.** This registry is incomplete. Only Timetable Builder and Degree Explorer are health-checked so far. Endpoints here are unofficial unless marked otherwise. Do not treat this as a University of Toronto service.
+
 A simple index and uptime monitor for University of Toronto APIs, machine-readable services, and data endpoints.
 
 This tracks APIs that U of T uses which might be useful to students and developers. Reliability of those APIs is not guaranteed, and neither is this registry. It is a start.
@@ -12,13 +14,13 @@ Health checks run safe, read-only requests via GitHub Actions every 12 hours. Fo
 
 Student payloads are never committed. Status files record HTTP codes, latency, and a short detail string only.
 
-## The questions this repo answers
+## Questions this repo answers
 
-- Here is the endpoint.
-- Here is what it returns.
-- Here is whether it currently works.
-- Here is whether you need authentication.
-- Here is whether U of T officially supports it.
+- What is the endpoint?
+- What does it return?
+- Does it currently work?
+- Do you need authentication?
+- Does U of T officially support it?
 
 ## API Registry
 
@@ -28,19 +30,19 @@ _Last checked: 2026-09-11T03:25:23Z (UTC)._
 
 | Service | Status | Auth | Method | Endpoint | Notes |
 |---|---|---|---|---|---|
-| Degree Explorer | ![auth required](https://img.shields.io/badge/auth_required-blue) | UTORid | GET | [`/dxStudent/getAcademicHistory`](https://degreeexplorer.utoronto.ca/degreeExplorer/rest/dxStudent/getAcademicHistory) | Unofficial. Student academic history and planner. Undocumented internal web API, not a supported public contract. Open the site root; after UTORauth/Duo the app redirects to Current Status, then REST calls work from that session. |
-| Timetable Builder (TTB) | ![operational](https://img.shields.io/badge/operational-brightgreen) | None | GET | [`/current-session`](https://api.easi.utoronto.ca/ttb/current-session) | Unofficial. Course schedules, timetable sections, room assignments, and instructors. Public and unauthenticated. |
+| Degree Explorer | ![auth required](https://img.shields.io/badge/auth_required-blue?style=for-the-badge) | UTORid | GET | [`/dxStudent/getAcademicHistory`](https://degreeexplorer.utoronto.ca/degreeExplorer/rest/dxStudent/getAcademicHistory) | Unofficial. Student academic history and planner. Undocumented internal web API, not a supported public contract. Open the site root; after UTORauth/Duo the app redirects to Current Status, then REST calls work from that session. |
+| Timetable Builder (TTB) | ![operational](https://img.shields.io/badge/operational-brightgreen?style=for-the-badge) | None | GET | [`/current-session`](https://api.easi.utoronto.ca/ttb/current-session) | Unofficial. Course schedules, timetable sections, room assignments, and instructors. Public and unauthenticated. |
 
 <!-- registry:end -->
 
 ## Status definitions
 
-- Operational: Endpoint responds with the expected status and a valid JSON shape after login.
-- Auth Required: Service is reachable and asks for UTORid (or another credential). The unauthenticated probe succeeded.
-- Degraded: Service is responding, but the status or payload was unexpected.
-- Down: Timeout, DNS failure, or an error from the Degree Explorer host itself.
-- Deprecated: Known decommissioned or retired service.
-- Unknown: Endpoint has not been tested yet.
+- ![operational](https://img.shields.io/badge/operational-brightgreen?style=for-the-badge) Endpoint responds with the expected status and a valid JSON shape after login.
+- ![auth required](https://img.shields.io/badge/auth_required-blue?style=for-the-badge) Service is reachable and asks for UTORid (or another credential). The unauthenticated probe succeeded.
+- ![degraded](https://img.shields.io/badge/degraded-yellow?style=for-the-badge) Service is responding, but the status or payload was unexpected.
+- ![down](https://img.shields.io/badge/down-red?style=for-the-badge) Timeout, DNS failure, or an error from the host itself.
+- ![deprecated](https://img.shields.io/badge/deprecated-lightgrey?style=for-the-badge) Known decommissioned or retired service.
+- ![unknown](https://img.shields.io/badge/unknown-lightgrey?style=for-the-badge) Endpoint has not been tested yet.
 
 ## Degree Explorer
 
@@ -88,12 +90,11 @@ Degree Explorer login hits Duo. A Chromium window opens. Enter a Duo Mobile pass
 
 ## GitHub Actions
 
-The workflow `.github/workflows/api-health.yml` runs every 12 hours and on manual dispatch. Add these repository secrets when you want the runner to attempt login:
+The workflow `.github/workflows/api-health.yml` runs every 12 hours and on manual dispatch.
 
-- `UOFT_UTORID`
-- `UOFT_PASSWORD`
+Put `UOFT_UTORID` and `UOFT_PASSWORD` in **repository secrets** (Settings → Secrets and variables → Actions). This job has no GitHub Environment, so environment secrets are not read.
 
-The workflow maps those secrets to the same environment variable names as `.env`. If the secrets are empty, the runner only does the unauthenticated reachability probe.
+The names match `.env`. The runner can submit UTORid and password, but it cannot finish Duo, so Degree Explorer stays **auth required** when the unauthenticated 302 is healthy. Do not add `UOFT_MFA_CODE` on GitHub.
 
 ## Repository layout
 

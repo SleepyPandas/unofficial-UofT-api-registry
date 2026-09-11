@@ -23,6 +23,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      # Repository secrets (Settings → Secrets and variables → Actions).
+      # Do not use Environment secrets: this job has no `environment:`.
+      # Duo cannot finish on the runner, so Degree Explorer stays auth_required
+      # on a healthy UTORauth 302. Do not store UOFT_MFA_CODE here.
       - name: Probe APIs
         env:
           UOFT_UTORID: ${{ secrets.UOFT_UTORID }}

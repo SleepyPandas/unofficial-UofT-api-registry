@@ -4,8 +4,9 @@ Local testing:
     1. Fill UOFT_UTORID and UOFT_PASSWORD in the repo-root .env file.
     2. python src/check_all_api.py
 
-GitHub Actions maps the same names from repository secrets. The checker
-never writes API response bodies, only status metadata.
+GitHub Actions maps UOFT_UTORID and UOFT_PASSWORD from repository secrets
+(not environment secrets). The checker never writes API response bodies,
+only status metadata.
 """
 
 from __future__ import annotations
@@ -261,10 +262,14 @@ def render_registry_table(payload: dict[str, Any]) -> str:
 
 
 def status_badge(status: str) -> str:
+    """Render a large Shields.io badge for README tables and legends."""
     label = STATUS_LABELS.get(status, status.replace("_", " "))
     color = BADGE_COLORS.get(status, "lightgrey")
     message = label.replace(" ", "_")
-    return f"![{label}](https://img.shields.io/badge/{message}-{color})"
+    return (
+        f"![{label}](https://img.shields.io/badge/{message}-{color}"
+        "?style=for-the-badge)"
+    )
 
 
 def _latency_ms(started: float) -> int:
