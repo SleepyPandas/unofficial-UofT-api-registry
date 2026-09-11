@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: api-health-pages
+  group: api-health-pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -43,6 +43,7 @@ jobs:
           path: ${{ runner.temp }}/health-site
 
   deploy:
+    if: github.ref_name == github.event.repository.default_branch
     needs: check
     runs-on: ubuntu-latest
     permissions:
