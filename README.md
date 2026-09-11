@@ -2,58 +2,118 @@
 
 A simple index and uptime monitor for University of Toronto APIs, machine-readable services, and data endpoints.
 
-This is intended to track the APIs that UofT uses for things that might be useful, the reliability of APIs may not be guaranteed thus the reliability of this github repository. But it is a start.
+This tracks APIs that U of T uses which might be useful to students and developers. Reliability of those APIs is not guaranteed, and neither is this registry. It is a start.
 
 ## Overview
 
-This repository catalogs known public and authenticated University of Toronto endpoints, documents their access requirements, and tracks their availability via automated daily health checks.
+This repository catalogs known public and authenticated University of Toronto endpoints, documents their access requirements, and tracks availability with automated health checks.
 
-Daily health checks run safe, read-only requests via GitHub Actions. Services are evaluated against expected response codes (for example, a 401 response on an authenticated endpoint confirms the service is online and reachable).
+Health checks run safe, read-only requests via GitHub Actions every 12 hours. For authenticated services, a login redirect (for example HTTP 302 to UTORauth) is enough to show the service is online. A successful logged-in GET can upgrade the badge to operational; a failed logged-in GET does not mark the service down if that redirect still works.
 
+Student payloads are never committed. Status files record HTTP codes, latency, and a short detail string only.
 
+## The questions this repo answers
 
-## The main Goal of this repo to answer these questions! 
-
-Here is the endpoint.
-Here is what it returns.
-Here is whether it currently works.
-Here is an example.
-Here is whether you need authentication.
-Here is whether U of T officially supports it.
+- Here is the endpoint.
+- Here is what it returns.
+- Here is whether it currently works.
+- Here is whether you need authentication.
+- Here is whether U of T officially supports it.
 
 ## API Registry
 
-| Service | Status | Auth | Method | Endpoint / Docs | Notes |
+<!-- registry:start -->
+
+_Last checked: 2026-09-11T03:14:37Z (UTC)._
+
+| Service | Status | Auth | Method | Endpoint | Notes |
 |---|---|---|---|---|---|
-| Timetable Builder (TTB) | Operational | None | GET | [Endpoint Placeholder] | Course schedules and listings |
-| Quercus (Canvas LMS) | Auth Required | API Token | GET | [Endpoint Placeholder] | Canvas REST API |
-| Degree Explorer | Auth Required | UTORid | GET | [Endpoint Placeholder] | Academic history and planner |
-| ACORN | Auth Required | UTORid + MFA | GET | [Endpoint Placeholder] | Student records and enrolment |
-| TSpace | Operational | None | GET | [Endpoint Placeholder] | Research repository |
-| Borealis | Operational | None | GET | [Endpoint Placeholder] | Dataverse research data repository |
-| Cobalt | Deprecated | None | N/A | [Archived Docs] | Legacy community API (offline) |
+| Degree Explorer | ![operational](https://img.shields.io/badge/operational-brightgreen) | UTORid | GET | [`/dxStudent/getAcademicHistory`](https://degreeexplorer.utoronto.ca/degreeExplorer/rest/dxStudent/getAcademicHistory) | Unofficial. Student academic history and planner. Undocumented internal web API, not a supported public contract. Open the site root; after UTORauth/Duo the app redirects to Current Status, then REST calls work from that session. |
+| Timetable Builder (TTB) | ![operational](https://img.shields.io/badge/operational-brightgreen) | None | GET | [`/current-session`](https://api.easi.utoronto.ca/ttb/current-session) | Unofficial. Course schedules, timetable sections, room assignments, and instructors. Public and unauthenticated. |
 
-## Status Definitions
+<!-- registry:end -->
 
-- Operational: Endpoint responds with expected status and valid schema.
-- Auth Required: Service is reachable and functional, but requires user credentials or an API token.
-- Degraded: Service is responding, but returns unexpected status codes or payloads.
-- Down: Endpoint timed out, encountered DNS failure, or returned 5xx errors.
+## Status definitions
+
+- Operational: Endpoint responds with the expected status and a valid JSON shape after login.
+- Auth Required: Service is reachable and asks for UTORid (or another credential). The unauthenticated probe succeeded.
+- Degraded: Service is responding, but the status or payload was unexpected.
+- Down: Timeout, DNS failure, or an error from the Degree Explorer host itself.
 - Deprecated: Known decommissioned or retired service.
-- Unknown: Endpoint cannot be safely checked automatically or has not been tested.
+- Unknown: Endpoint has not been tested yet.
 
-## Planned Repository Structure
+## Degree Explorer
+
+- Human UI: https://degreeexplorer.utoronto.ca/
+- REST base: `https://degreeexplorer.utoronto.ca/degreeExplorer/rest`
+- Confirmed read: `GET /dxStudent/getAcademicHistory`
+- Auth: UTORid via UTORauth SAML (`idpz.utorauth.utoronto.ca`)
+- Official support: no. This is an internal web API used by the Degree Explorer frontend.
+- Detailed Catalog: [`json/degree_explorer.json`](json/degree_explorer.json)
+
+`get_academic_history()` returns academic history JSON (facultyCourses, sessions, courses, marks). `view_academic_history()` returns counts and top-level keys only, so it is safe to print.
+
+## Timetable Builder (TTB)
+
+- Human UI: https://ttb.utoronto.ca/
+- REST base: `https://api.easi.utoronto.ca/ttb`
+- Confirmed read: `GET /current-session`, `GET /reference-data`, `GET /getCoursesByCodeAndSectionCode/{code}`
+- Auth: None (Public and unauthenticated)
+- Official support: no. This is the JSON API used by the official Timetable Builder frontend.
+- Detailed Catalog: [`json/timetable_builder.json`](json/timetable_builder.json)
+
+See [`api_doc.md`](api_doc.md) for the complete endpoint tables, parameters, and schemas.
+
+## Local testing
+
+1. Copy `.env.example` to `.env` if you do not already have `.env`.
+2. Put your UTORid and password in `.env`. That file is gitignored.
+3. Install dependencies, Chromium (needed for Duo), and run the checker:
+
+```text
+pip install -r requirements.txt
+python -m playwright install chromium
+python src/check_all_api.py
+```
+
+On Windows with the repo venv:
+
+```text
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe -m playwright install chromium
+.venv\Scripts\python.exe src/check_all_api.py
+```
+
+Degree Explorer login hits Duo. A Chromium window opens. Enter a Duo Mobile passcode in the terminal or in that window (push also works). GitHub Actions cannot complete Duo, so the runner keeps the unauthenticated **auth required** probe unless you are testing locally.
+
+## GitHub Actions
+
+The workflow `.github/workflows/api-health.yml` runs every 12 hours and on manual dispatch. Add these repository secrets when you want the runner to attempt login:
+
+- `UOFT_UTORID`
+- `UOFT_PASSWORD`
+
+The workflow maps those secrets to the same environment variable names as `.env`. If the secrets are empty, the runner only does the unauthenticated reachability probe.
+
+## Repository layout
 
 ```text
 unofficial-UofT-api-registry/
 |-- README.md
+|-- api_doc.md
 |-- data/
 |   |-- apis.json
 |   `-- status.json
+|-- json/
+|   |-- degree_explorer.json
+|   `-- timetable_builder.json
+|-- src/
+|   `-- apis/
+|       |-- degree_explorer.py
+|       `-- timetable_builder.py
 |-- scripts/
-|   `-- check-apis.py
+|   `-- check_apis.py
 `-- .github/
     `-- workflows/
         `-- api-health.yml
 ```
-
