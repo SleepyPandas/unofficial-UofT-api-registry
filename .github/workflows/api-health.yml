@@ -1,0 +1,42 @@
+name: API health
+
+on:
+  schedule:
+    - cron: "0 */12 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Probe APIs
+        env:
+          UOFT_UTORID: ${{ secrets.UOFT_UTORID }}
+          UOFT_PASSWORD: ${{ secrets.UOFT_PASSWORD }}
+        run: python src/check_all_api.py
+
+      - name: Commit status
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/status.json README.md
+          if git diff --staged --quiet; then
+            echo "No status changes"
+          else
+            git commit -m "Update API health status"
+            git push
+          fi

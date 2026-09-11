@@ -1,0 +1,35 @@
+{
+  "checked_at": "2026-09-11T03:14:37Z",
+  "results": [
+    {
+      "id": "degree-explorer",
+      "name": "Degree Explorer",
+      "auth": "UTORid",
+      "official_support": false,
+      "notes": "Student academic history and planner. Undocumented internal web API, not a supported public contract. Open the site root; after UTORauth/Duo the app redirects to Current Status, then REST calls work from that session.",
+      "method": "GET",
+      "path": "/dxStudent/getAcademicHistory",
+      "url": "https://degreeexplorer.utoronto.ca/degreeExplorer/rest/dxStudent/getAcademicHistory",
+      "human_url": "https://degreeexplorer.utoronto.ca/",
+      "status": "operational",
+      "status_code": 200,
+      "latency_ms": 20365,
+      "detail": "Authenticated GET /dxStudent/getAcademicHistory returned JSON."
+    },
+    {
+      "id": "timetable-builder",
+      "name": "Timetable Builder (TTB)",
+      "auth": "None",
+      "official_support": false,
+      "notes": "Course schedules, timetable sections, room assignments, and instructors. Public and unauthenticated.",
+      "method": "GET",
+      "path": "/current-session",
+      "url": "https://api.easi.utoronto.ca/ttb/current-session",
+      "human_url": "https://ttb.utoronto.ca/",
+      "status": "operational",
+      "status_code": 200,
+      "latency_ms": 49,
+      "detail": "GET /current-session returned HTTP 200."
+    }
+  ]
+}
