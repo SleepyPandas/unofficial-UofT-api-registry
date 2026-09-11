@@ -1,0 +1,74 @@
+{
+  "apis": [
+    {
+      "id": "degree-explorer",
+      "name": "Degree Explorer",
+      "base_url": "https://degreeexplorer.utoronto.ca/degreeExplorer/rest",
+      "human_url": "https://degreeexplorer.utoronto.ca/",
+      "auth": "UTORid",
+      "official_support": false,
+      "notes": "Student academic history and planner. Undocumented internal web API, not a supported public contract. Open the site root; after UTORauth/Duo the app redirects to Current Status, then REST calls work from that session.",
+      "endpoints": [
+        {
+          "id": "get-academic-history",
+          "method": "GET",
+          "path": "/dxStudent/getAcademicHistory",
+          "purpose": "Academic history used by the Degree Explorer web client"
+        },
+        {
+          "id": "get-student-data",
+          "method": "GET",
+          "path": "/dxStudent/getStudentData",
+          "purpose": "Student data loaded by Current Status"
+        },
+        {
+          "id": "get-student-record",
+          "method": "GET",
+          "path": "/dxStudent/getStudentRecord",
+          "purpose": "Student record used by Current Status"
+        },
+        {
+          "id": "get-student-user-data",
+          "method": "GET",
+          "path": "/dxMenu/getStudentUserData",
+          "purpose": "Menu user payload"
+        },
+        {
+          "id": "get-student-menu",
+          "method": "GET",
+          "path": "/dxMenu/getStudentMenu",
+          "purpose": "Student menu"
+        },
+        {
+          "id": "get-messages",
+          "method": "GET",
+          "path": "/messages/getMessages",
+          "purpose": "In-app messages"
+        },
+        {
+          "id": "get-session-timeouts",
+          "method": "GET",
+          "path": "/dxMenu/getSessionTimeouts",
+          "purpose": "Session timeout settings"
+        }
+      ]
+    },
+    {
+      "id": "timetable-builder",
+      "name": "Timetable Builder (TTB)",
+      "base_url": "https://api.easi.utoronto.ca/ttb",
+      "human_url": "https://ttb.utoronto.ca/",
+      "auth": "None",
+      "official_support": false,
+      "notes": "Course schedules, timetable sections, room assignments, and instructors. Public and unauthenticated.",
+      "endpoints": [
+        {
+          "id": "get-current-session",
+          "method": "GET",
+          "path": "/current-session",
+          "purpose": "Active academic terms and session codes"
+        }
+      ]
+    }
+  ]
+}

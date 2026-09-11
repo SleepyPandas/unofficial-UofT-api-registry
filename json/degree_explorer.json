@@ -1,0 +1,25 @@
+{
+  "api": {
+    "id": "degree-explorer",
+    "name": "Degree Explorer",
+    "description": "Student academic history and program completion planner web application used across all U of T campuses.",
+    "base_url": "https://degreeexplorer.utoronto.ca/degreeExplorer/rest",
+    "human_url": "https://degreeexplorer.utoronto.ca/",
+    "operator": "University of Toronto",
+    "auth": "UTORid via UTORauth SAML SSO (idpz.utorauth.utoronto.ca)",
+    "official_support": false,
+    "security_note": "Academic record data is highly sensitive. Credentials, session cookies, and student records must never be logged or committed.",
+    "endpoints": [
+      {
+        "id": "get-academic-history",
+        "method": "GET",
+        "path": "/dxStudent/getAcademicHistory",
+        "purpose": "Academic course history, completed sessions, entered marks, and degree requirements used by the Degree Explorer client.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json"
+      }
+    ]
+  }
+}
