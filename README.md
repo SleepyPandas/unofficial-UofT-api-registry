@@ -12,7 +12,7 @@ This repository catalogs known public and authenticated University of Toronto en
 
 Health checks run safe, read-only requests via GitHub Actions every 12 hours. For authenticated services, a login redirect (for example HTTP 302 to UTORauth) is enough to show the service is online. A successful logged-in GET can upgrade the badge to operational; a failed logged-in GET does not mark the service down if that redirect still works.
 
-Student payloads are never committed. Status files record HTTP codes, latency, and a short detail string only.
+Student payloads are never published. The live status records HTTP codes, latency, and a short detail string only.
 
 ## Questions this repo answers
 
@@ -26,12 +26,12 @@ Student payloads are never committed. Status files record HTTP codes, latency, a
 
 <!-- registry:start -->
 
-_Last checked: 2026-09-11T03:25:23Z (UTC)._
+[![Last checked](https://img.shields.io/endpoint?url=https%3A%2F%2Fsleepypandas.github.io%2Funofficial-UofT-api-registry%2Fbadges%2Fchecked-at.json&style=for-the-badge)](https://sleepypandas.github.io/unofficial-UofT-api-registry/status.json)
 
 | Service | Status | Auth | Method | Endpoint | Notes |
 |---|---|---|---|---|---|
-| Degree Explorer | ![auth required](https://img.shields.io/badge/auth_required-blue?style=for-the-badge) | UTORid | GET | [`/dxStudent/getAcademicHistory`](https://degreeexplorer.utoronto.ca/degreeExplorer/rest/dxStudent/getAcademicHistory) | Unofficial. Student academic history and planner. Undocumented internal web API, not a supported public contract. Open the site root; after UTORauth/Duo the app redirects to Current Status, then REST calls work from that session. |
-| Timetable Builder (TTB) | ![operational](https://img.shields.io/badge/operational-brightgreen?style=for-the-badge) | None | GET | [`/current-session`](https://api.easi.utoronto.ca/ttb/current-session) | Unofficial. Course schedules, timetable sections, room assignments, and instructors. Public and unauthenticated. |
+| Degree Explorer | ![Degree Explorer status](https://img.shields.io/endpoint?url=https%3A%2F%2Fsleepypandas.github.io%2Funofficial-UofT-api-registry%2Fbadges%2Fdegree-explorer.json&style=for-the-badge) | UTORid | GET | [`/dxStudent/getAcademicHistory`](https://degreeexplorer.utoronto.ca/degreeExplorer/rest/dxStudent/getAcademicHistory) | Unofficial. Student academic history and planner. Undocumented internal web API, not a supported public contract. Open the site root; after UTORauth/Duo the app redirects to Current Status, then REST calls work from that session. |
+| Timetable Builder (TTB) | ![Timetable Builder status](https://img.shields.io/endpoint?url=https%3A%2F%2Fsleepypandas.github.io%2Funofficial-UofT-api-registry%2Fbadges%2Ftimetable-builder.json&style=for-the-badge) | None | GET | [`/current-session`](https://api.easi.utoronto.ca/ttb/current-session) | Unofficial. Course schedules, timetable sections, room assignments, and instructors. Public and unauthenticated. |
 
 <!-- registry:end -->
 
@@ -96,6 +96,8 @@ Put `UOFT_UTORID` and `UOFT_PASSWORD` in **repository secrets** (Settings → Se
 
 The names match `.env`. The runner can submit UTORid and password, but it cannot finish Duo, so Degree Explorer stays **auth required** when the unauthenticated 302 is healthy. Do not add `UOFT_MFA_CODE` on GitHub.
 
+The workflow publishes `status.json` and the badge endpoints as a GitHub Pages artifact. It does not commit generated status updates. Set **Settings → Pages → Source** to **GitHub Actions** once before the first deployment.
+
 ## Repository layout
 
 ```text
@@ -103,8 +105,7 @@ unofficial-UofT-api-registry/
 |-- README.md
 |-- api_doc.md
 |-- data/
-|   |-- apis.json
-|   `-- status.json
+|   `-- apis.json
 |-- json/
 |   |-- degree_explorer.json
 |   `-- timetable_builder.json

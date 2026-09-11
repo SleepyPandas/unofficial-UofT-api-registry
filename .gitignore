@@ -204,6 +204,10 @@ ENV/
 env.bak/
 venv.bak/
 
+# Generated health-check output
+/data/status.json
+/data/badges/
+
 # Spyder project settings
 .spyderproject
 .spyproject

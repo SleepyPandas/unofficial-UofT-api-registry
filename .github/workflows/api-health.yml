@@ -6,7 +6,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: api-health-pages-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   check:
@@ -31,16 +35,27 @@ jobs:
         env:
           UOFT_UTORID: ${{ secrets.UOFT_UTORID }}
           UOFT_PASSWORD: ${{ secrets.UOFT_PASSWORD }}
-        run: python src/check_all_api.py
+        run: python src/check_all_api.py --output "$RUNNER_TEMP/health-site/status.json"
 
-      - name: Commit status
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/status.json README.md
-          if git diff --staged --quiet; then
-            echo "No status changes"
-          else
-            git commit -m "Update API health status"
-            git push
-          fi
+      - name: Upload status
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ${{ runner.temp }}/health-site
+
+  deploy:
+    if: github.ref_name == github.event.repository.default_branch
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Publish status
+        id: deployment
+        uses: actions/deploy-pages@v4

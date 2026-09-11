@@ -1,4 +1,4 @@
-"""Run read-only API health checks and refresh README status badges.
+"""Run read-only API health checks and write publishable status files.
 
 Local testing:
     1. Fill UOFT_UTORID and UOFT_PASSWORD in the repo-root .env file.
@@ -11,6 +11,7 @@ only status metadata.
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -33,11 +34,6 @@ from env_file import load_env_file
 
 DATA_DIR = REPO_ROOT / "data"
 APIS_PATH = DATA_DIR / "apis.json"
-STATUS_PATH = DATA_DIR / "status.json"
-README_PATH = REPO_ROOT / "README.md"
-REGISTRY_START = "<!-- registry:start -->"
-REGISTRY_END = "<!-- registry:end -->"
-
 BADGE_COLORS = {
     "operational": "brightgreen",
     "auth_required": "blue",
@@ -58,6 +54,15 @@ STATUS_LABELS = {
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=DATA_DIR / "status.json",
+        help="Status JSON path; badge endpoint JSON is written beside it.",
+    )
+    args = parser.parse_args()
+
     load_env_file(REPO_ROOT / ".env")
     registry = json.loads(APIS_PATH.read_text(encoding="utf-8"))
     results = []
@@ -73,8 +78,7 @@ def main() -> int:
         "checked_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "results": results,
     }
-    STATUS_PATH.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    update_readme(payload)
+    write_status_files(payload, args.output)
     for result in results:
         print(
             f"{result['name']}: {result['status']} "
@@ -222,53 +226,35 @@ def result_row(
     }
 
 
-def update_readme(payload: dict[str, Any]) -> None:
-    """Replace the README registry block with a badge table."""
-    readme = README_PATH.read_text(encoding="utf-8")
-    start = readme.find(REGISTRY_START)
-    end = readme.find(REGISTRY_END)
-    if start == -1 or end == -1 or end < start:
-        raise SystemExit("README.md is missing <!-- registry:start --> / <!-- registry:end --> markers.")
-    table = render_registry_table(payload)
-    updated = readme[: start + len(REGISTRY_START)] + "\n\n" + table + "\n\n" + readme[end:]
-    README_PATH.write_text(updated, encoding="utf-8")
+def write_status_files(payload: dict[str, Any], output_path: Path) -> None:
+    """Write full status plus Shields.io endpoint payloads."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
-
-def render_registry_table(payload: dict[str, Any]) -> str:
-    checked_at = payload.get("checked_at") or "never"
-    lines = [
-        f"_Last checked: {checked_at} (UTC)._",
-        "",
-        "| Service | Status | Auth | Method | Endpoint | Notes |",
-        "|---|---|---|---|---|---|",
-    ]
+    badges_dir = output_path.parent / "badges"
+    badges_dir.mkdir(exist_ok=True)
     for result in payload.get("results", []):
-        badge = status_badge(result["status"])
-        support = "Unofficial" if not result.get("official_support") else "Official"
-        notes = result.get("notes") or ""
-        endpoint = f"[`{result['path']}`]({result['url']})"
-        lines.append(
-            "| {name} | {badge} | {auth} | {method} | {endpoint} | {support}. {notes} |".format(
-                name=result["name"],
-                badge=badge,
-                auth=result.get("auth") or "Unknown",
-                method=result.get("method") or "GET",
-                endpoint=endpoint,
-                support=support,
-                notes=notes,
-            )
-        )
-    return "\n".join(lines)
+        status = result["status"]
+        badge = {
+            "schemaVersion": 1,
+            "label": "",
+            "message": STATUS_LABELS.get(status, status.replace("_", " ")),
+            "color": BADGE_COLORS.get(status, "lightgrey"),
+            "cacheSeconds": 300,
+        }
+        badge_path = badges_dir / f"{result['id']}.json"
+        badge_path.write_text(json.dumps(badge, indent=2) + "\n", encoding="utf-8")
 
-
-def status_badge(status: str) -> str:
-    """Render a large Shields.io badge for README tables and legends."""
-    label = STATUS_LABELS.get(status, status.replace("_", " "))
-    color = BADGE_COLORS.get(status, "lightgrey")
-    message = label.replace(" ", "_")
-    return (
-        f"![{label}](https://img.shields.io/badge/{message}-{color}"
-        "?style=for-the-badge)"
+    checked_badge = {
+        "schemaVersion": 1,
+        "label": "last checked",
+        "message": payload.get("checked_at") or "never",
+        "color": "blue",
+        "cacheSeconds": 300,
+    }
+    (badges_dir / "checked-at.json").write_text(
+        json.dumps(checked_badge, indent=2) + "\n",
+        encoding="utf-8",
     )
 
 
