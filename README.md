@@ -10,6 +10,17 @@ This repository catalogs known public and authenticated University of Toronto en
 
 Daily health checks run safe, read-only requests via GitHub Actions. Services are evaluated against expected response codes (for example, a 401 response on an authenticated endpoint confirms the service is online and reachable).
 
+
+
+## The main Goal of this repo to answer these questions! 
+
+Here is the endpoint.
+Here is what it returns.
+Here is whether it currently works.
+Here is an example.
+Here is whether you need authentication.
+Here is whether U of T officially supports it.
+
 ## API Registry
 
 | Service | Status | Auth | Method | Endpoint / Docs | Notes |
