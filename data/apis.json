@@ -54,6 +54,125 @@
       ]
     },
     {
+      "id": "acorn",
+      "name": "ACORN",
+      "base_url": "https://acorn.utoronto.ca/sws/rest",
+      "human_url": "https://acorn.utoronto.ca/sws",
+      "auth": "UTORid",
+      "official_support": false,
+      "notes": "Course enrolment portal. Undocumented internal web API, GET reads only. Open /sws; after UTORauth/Duo the dashboard REST calls work from that session. Enrolment payloads must never be published.",
+      "endpoints": [
+        {
+          "id": "get-eligible-registrations",
+          "method": "GET",
+          "path": "/enrolment/eligible-registrations",
+          "purpose": "Active registrations and registrationParams bundle"
+        },
+        {
+          "id": "get-current-registrations",
+          "method": "GET",
+          "path": "/enrolment/current-registrations",
+          "purpose": "Currently active registration records"
+        },
+        {
+          "id": "get-enrolled-courses",
+          "method": "GET",
+          "path": "/enrolment/course/enrolled-courses",
+          "purpose": "Enrolled, waitlisted, and dropped course buckets"
+        },
+        {
+          "id": "get-dashboard-enrolled-courses",
+          "method": "GET",
+          "path": "/dashboard/courseRegistration/enrolledCourses",
+          "purpose": "Dashboard enrolled-course list"
+        },
+        {
+          "id": "get-enrolment-plan",
+          "method": "GET",
+          "path": "/enrolment/plan",
+          "purpose": "Enrolment cart"
+        },
+        {
+          "id": "get-course-view",
+          "method": "GET",
+          "path": "/enrolment/course/view",
+          "purpose": "Single-course detail and waitlist rank"
+        },
+        {
+          "id": "get-enrolment-start-times",
+          "method": "GET",
+          "path": "/enrolment/start-times",
+          "purpose": "Enrolment start times and windows"
+        },
+        {
+          "id": "get-posts-with-invite-status",
+          "method": "GET",
+          "path": "/enrolment/posts-with-invite-status",
+          "purpose": "Program/POSt invitations"
+        },
+        {
+          "id": "get-student-registration-info",
+          "method": "GET",
+          "path": "/profile/studentRegistrationInfo",
+          "purpose": "Registration and financial-hold status"
+        },
+        {
+          "id": "get-notification",
+          "method": "GET",
+          "path": "/notification",
+          "purpose": "Inbox notifications and action notices"
+        },
+        {
+          "id": "get-acorn-check-list-items",
+          "method": "GET",
+          "path": "/acorn-check-list/items",
+          "purpose": "Pre-enrolment checklist items"
+        },
+        {
+          "id": "get-acorn-check-list-todos",
+          "method": "GET",
+          "path": "/acorn-check-list/todos",
+          "purpose": "Dashboard checklist todos"
+        },
+        {
+          "id": "get-tuition-prepayment",
+          "method": "GET",
+          "path": "/financial-account/tuitionPrepayment",
+          "purpose": "Tuition prepayment status"
+        },
+        {
+          "id": "get-tuition-fee-admission-deposits",
+          "method": "GET",
+          "path": "/fee-payment/tuitionFeeAdmissionDeposits",
+          "purpose": "Admission deposits"
+        },
+        {
+          "id": "get-net-cost-view",
+          "method": "GET",
+          "path": "/net-cost-view",
+          "purpose": "Net cost / financial-aid session view"
+        },
+        {
+          "id": "get-dental-opt-out-session-code",
+          "method": "GET",
+          "path": "/dashboard/finance/dentalOptOutSessionCode",
+          "purpose": "Dental plan opt-out session code"
+        },
+        {
+          "id": "get-dashboard-events-today",
+          "method": "GET",
+          "path": "/dashboard/eventCalendar/getDashboardEvents/TODAY",
+          "purpose": "Dashboard events for today"
+        },
+        {
+          "id": "get-awards",
+          "method": "GET",
+          "path": "/awards",
+          "purpose": "Awards and scholarships (observed HTTP 500)"
+        }
+      ]
+    },
+    {
       "id": "timetable-builder",
       "name": "Timetable Builder (TTB)",
       "base_url": "https://api.easi.utoronto.ca/ttb",
