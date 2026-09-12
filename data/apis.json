@@ -43,13 +43,25 @@
           "id": "get-messages",
           "method": "GET",
           "path": "/messages/getMessages",
-          "purpose": "In-app messages"
+          "purpose": "UI string catalog used by the web client"
         },
         {
           "id": "get-session-timeouts",
           "method": "GET",
           "path": "/dxMenu/getSessionTimeouts",
           "purpose": "Session timeout settings"
+        },
+        {
+          "id": "get-planner",
+          "method": "GET",
+          "path": "/dxPlanner/getPlanner",
+          "purpose": "Planner timelines and primary-plan flags"
+        },
+        {
+          "id": "get-cell-details",
+          "method": "GET",
+          "path": "/dxPlanner/getCellDetails",
+          "purpose": "Planner cell details after a timeline click"
         }
       ]
     },

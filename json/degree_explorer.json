@@ -18,7 +18,96 @@
         "parameters": [],
         "auth_required": true,
         "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
-        "response_type": "application/json"
+        "response_type": "application/json",
+        "source": "Current Status and Academic History XHR; gist.github.com/B44ken"
+      },
+      {
+        "id": "get-student-data",
+        "method": "GET",
+        "path": "/dxStudent/getStudentData",
+        "purpose": "Student payload loaded by the Current Status page after login.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "HTTP 302 to UTORauth",
+        "response_type": "application/json",
+        "source": "Observed Current Status XHR"
+      },
+      {
+        "id": "get-student-record",
+        "method": "GET",
+        "path": "/dxStudent/getStudentRecord",
+        "purpose": "Student record used by Current Status.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "HTTP 302 to UTORauth",
+        "response_type": "application/json",
+        "source": "Observed Current Status XHR"
+      },
+      {
+        "id": "get-student-user-data",
+        "method": "GET",
+        "path": "/dxMenu/getStudentUserData",
+        "purpose": "Menu/session user payload.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "HTTP 302 to UTORauth",
+        "response_type": "application/json",
+        "source": "Observed app-shell XHR"
+      },
+      {
+        "id": "get-student-menu",
+        "method": "GET",
+        "path": "/dxMenu/getStudentMenu",
+        "purpose": "Student navigation menu.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "HTTP 302 to UTORauth",
+        "response_type": "application/json",
+        "source": "Observed app-shell XHR"
+      },
+      {
+        "id": "get-messages",
+        "method": "GET",
+        "path": "/messages/getMessages",
+        "purpose": "UI string catalog used by the Degree Explorer client (not a student inbox).",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "HTTP 302 to UTORauth",
+        "response_type": "application/json",
+        "source": "Observed app-shell XHR"
+      },
+      {
+        "id": "get-session-timeouts",
+        "method": "GET",
+        "path": "/dxMenu/getSessionTimeouts",
+        "purpose": "Session timeout settings for the web client.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "HTTP 302 to UTORauth",
+        "response_type": "application/json",
+        "source": "Observed app-shell XHR"
+      },
+      {
+        "id": "get-planner",
+        "method": "GET",
+        "path": "/dxPlanner/getPlanner",
+        "purpose": "Planner timelines and primary-plan flags used by the Planner tab.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "HTTP 302 to UTORauth",
+        "response_type": "application/json",
+        "source": "Observed Planner XHR, 2026-09-11"
+      },
+      {
+        "id": "get-cell-details",
+        "method": "GET",
+        "path": "/dxPlanner/getCellDetails",
+        "purpose": "Planner cell popup after a timeline click.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "HTTP 302 to UTORauth",
+        "response_type": "application/json",
+        "source": "Observed Planner XHR, 2026-09-11"
       }
     ]
   }

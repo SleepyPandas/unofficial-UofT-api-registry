@@ -5,8 +5,8 @@ the web app calls JSON routes under:
 
     https://degreeexplorer.utoronto.ca/degreeExplorer/rest
 
-The only inventory-confirmed read is GET /dxStudent/getAcademicHistory.
-Other get/view helpers are thin wrappers around the same REST host.
+Confirmed student reads include academic history, current status, menu
+payloads, and planner GETs. Write/POST routes are left for a later branch.
 
 This is not an officially supported public API. Academic records are
 sensitive: callers must not log or commit response bodies.
@@ -21,7 +21,7 @@ from urllib.parse import urljoin, urlparse
 
 import requests
 
-from .duo_mfa import DuoMfaError, complete_duo_in_browser
+from .duo_mfa import DuoBrowserConfig, DuoMfaError, complete_duo_in_browser
 
 BASE_URL = "https://degreeexplorer.utoronto.ca/degreeExplorer/rest"
 APP_URL = "https://degreeexplorer.utoronto.ca/"
@@ -34,6 +34,8 @@ GET_STUDENT_USER_DATA_PATH = "/dxMenu/getStudentUserData"
 GET_STUDENT_MENU_PATH = "/dxMenu/getStudentMenu"
 GET_MESSAGES_PATH = "/messages/getMessages"
 GET_SESSION_TIMEOUTS_PATH = "/dxMenu/getSessionTimeouts"
+GET_PLANNER_PATH = "/dxPlanner/getPlanner"
+GET_CELL_DETAILS_PATH = "/dxPlanner/getCellDetails"
 DEFAULT_TIMEOUT = 20
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -134,13 +136,24 @@ class DegreeExplorerClient:
             ),
         }
 
-    def login(self, utorid: str, password: str, mfa_code: str | None = None) -> None:
+    def login(
+        self,
+        utorid: str,
+        password: str,
+        mfa_code: str | None = None,
+        keep_open: bool = False,
+        keep_open_timeout_ms: int | None = None,
+        on_ready: Any = None,
+    ) -> None:
         """Complete UTORauth SAML login for Degree Explorer.
 
         After the password form, U of T sends the session to Duo. Locally
         a Chromium window opens so you can enter a one-time passcode or
         approve a push. GitHub Actions cannot complete Duo; skip secrets
         there and keep the unauthenticated reachability probe.
+
+        keep_open leaves Chromium up after Duo so extra REST calls can be
+        observed. on_ready(page, context, result) runs while it is still open.
 
         Raises DegreeExplorerAuthError on empty credentials, a rejected
         password, or Duo that is not completed in time.
@@ -149,7 +162,15 @@ class DegreeExplorerClient:
             raise DegreeExplorerAuthError("UTORid and password are required for login.")
 
         response = self.session.get(APP_URL, timeout=self.timeout)
-        self._follow_idp_until_service(response, utorid, password, mfa_code)
+        self._follow_idp_until_service(
+            response,
+            utorid,
+            password,
+            mfa_code,
+            keep_open=keep_open,
+            keep_open_timeout_ms=keep_open_timeout_ms,
+            on_ready=on_ready,
+        )
 
     def get(self, path: str, params: dict[str, str] | None = None) -> requests.Response:
         """GET a REST path on the Degree Explorer host and return the response."""
@@ -194,20 +215,28 @@ class DegreeExplorerClient:
         return self._get_json(GET_STUDENT_MENU_PATH)
 
     def get_messages(self) -> dict[str, Any]:
-        """GET /messages/getMessages."""
+        """GET /messages/getMessages. UI string catalog, not a student inbox."""
         return self._get_json(GET_MESSAGES_PATH)
 
     def get_session_timeouts(self) -> dict[str, Any]:
         """GET /dxMenu/getSessionTimeouts."""
         return self._get_json(GET_SESSION_TIMEOUTS_PATH)
 
+    def get_planner(self) -> dict[str, Any]:
+        """GET /dxPlanner/getPlanner. Used by the Planner tab."""
+        return self._get_json(GET_PLANNER_PATH)
+
+    def get_cell_details(self, params: dict[str, str] | None = None) -> dict[str, Any]:
+        """GET /dxPlanner/getCellDetails. Planner cell popup after a timeline click."""
+        return self._get_json(GET_CELL_DETAILS_PATH, params)
+
     def view_json_keys(self, path: str) -> dict[str, Any]:
         """GET a REST path and return only top-level JSON keys."""
         payload = self._get_json(path)
         return {"path": path, "top_level_keys": sorted(payload.keys())}
 
-    def _get_json(self, path: str) -> dict[str, Any]:
-        response = self.get(path)
+    def _get_json(self, path: str, params: dict[str, str] | None = None) -> dict[str, Any]:
+        response = self.get(path, params=params)
         if response.status_code in {401, 403} or _host_is(response.url, IDP_HOST):
             raise DegreeExplorerAuthError(
                 f"{path} is not authenticated (HTTP {response.status_code})."
@@ -230,6 +259,9 @@ class DegreeExplorerClient:
         utorid: str,
         password: str,
         mfa_code: str | None = None,
+        keep_open: bool = False,
+        keep_open_timeout_ms: int | None = None,
+        on_ready: Any = None,
     ) -> None:
         """Walk IdP HTML forms until the session is back on Degree Explorer."""
         posted_credentials = False
@@ -248,6 +280,10 @@ class DegreeExplorerClient:
                         password=password,
                         rest_url=self.base_url + GET_ACADEMIC_HISTORY_PATH,
                         app_url=APP_URL,
+                        browser_config=DuoBrowserConfig.degree_explorer(),
+                        keep_open=keep_open,
+                        keep_open_timeout_ms=keep_open_timeout_ms,
+                        on_ready=on_ready,
                     )
                 except DuoMfaError as exc:
                     raise DegreeExplorerAuthError(str(exc)) from exc

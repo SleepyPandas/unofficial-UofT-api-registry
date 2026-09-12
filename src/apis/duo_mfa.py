@@ -9,15 +9,17 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlparse
 
 import requests
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
 from playwright.sync_api import sync_playwright
 
 DUO_WAIT_MS = 180_000
+KEEP_OPEN_WAIT_MS = 900_000
 
 FETCH_JS = """async (url) => {
     const response = await fetch(url, {
@@ -83,6 +85,8 @@ def complete_duo_in_browser(
     *,
     browser_config: DuoBrowserConfig | None = None,
     keep_open: bool = False,
+    keep_open_timeout_ms: int | None = None,
+    on_ready: Callable[[Any, Any, dict[str, Any]], None] | None = None,
     probe_urls: list[str] | None = None,
 ) -> dict[str, Any]:
     """Open the Duo prompt and copy cookies back after MFA succeeds.
@@ -90,10 +94,8 @@ def complete_duo_in_browser(
     Type a Duo Mobile passcode in the Chromium window, or approve a push.
     Optional mfa_code is filled when the passcode field is found.
     If rest_url is set, GET it from the same browser context after login.
-
-    When keep_open is True the browser window stays up after authentication so
-    additional probe_urls can be fetched from the live session. Press Enter in
-    the terminal to close the browser and return.
+    If keep_open is true, Chromium stays up after login until the window is
+    closed or KEEP_OPEN_WAIT_MS elapses. on_ready runs while it is still open.
     """
     config = browser_config or DuoBrowserConfig.degree_explorer()
     code = (mfa_code or "").strip()
@@ -118,6 +120,13 @@ def complete_duo_in_browser(
         except Exception:
             pass
         page = context.new_page()
+        rest_calls: list[dict[str, Any]] = []
+        page.on(
+            "response",
+            lambda response: _record_rest_call(
+                response, rest_calls, config.rest_path_fragment
+            ),
+        )
         page.goto(duo_url, wait_until="domcontentloaded")
         if page.locator("#username").count() and utorid and password:
             page.fill("#username", utorid)
@@ -136,7 +145,7 @@ def complete_duo_in_browser(
             browser.close()
             raise DuoMfaError(config.success_timeout_msg) from exc
 
-        result = _fetch_rest_from_loaded_app(page, rest_url, app_url, config)
+        result = _fetch_rest_from_loaded_app(page, rest_url, rest_calls, config)
         _copy_playwright_cookies(context, session)
 
         urls_to_probe = list(probe_urls or [])
@@ -148,19 +157,64 @@ def complete_duo_in_browser(
         if probe_results:
             result["probe_results"] = probe_results
 
+        if on_ready is not None:
+            on_ready(page, context, result)
         if keep_open:
             _print_session_summary(result)
-            print("\nBrowser stays open so you can inspect the app or retry API calls.")
-            print("Press Enter in this terminal to close the browser and continue...")
+            print(
+                "Chromium is staying open. Click around if you want; "
+                "close the window when you are done."
+            )
             try:
-                input()
-            except EOFError:
-                page.wait_for_timeout(300_000)
+                wait_ms = (
+                    KEEP_OPEN_WAIT_MS
+                    if keep_open_timeout_ms is None
+                    else keep_open_timeout_ms
+                )
+                page.wait_for_event("close", timeout=wait_ms)
+            except PlaywrightTimeout:
+                print("Keep-open wait timed out; closing Chromium.")
+            except Exception:
+                pass
         else:
             page.wait_for_timeout(2_000)
-
-        browser.close()
+        try:
+            browser.close()
+        except Exception:
+            pass
         return result
+
+
+def _record_rest_call(
+    response: Any,
+    rest_calls: list[dict[str, Any]],
+    rest_prefix: str,
+) -> None:
+    """Append a PII-free record for an app REST response."""
+    url = response.url
+    if rest_prefix not in url:
+        return
+    parsed = urlparse(url)
+    try:
+        headers = response.headers
+        content_type = (headers.get("content-type") or "").split(";")[0]
+        method = response.request.method
+    except Exception:
+        return
+    path = parsed.path
+    if rest_prefix in path:
+        path = "/" + path.split(rest_prefix, 1)[1].lstrip("/")
+    rest_calls.append(
+        {
+            "method": method,
+            "path": path,
+            "query_keys": sorted(
+                {key for key, _ in parse_qsl(parsed.query, keep_blank_values=True)}
+            ),
+            "status": response.status,
+            "content_type": content_type,
+        }
+    )
 
 
 def _probe_urls_in_browser(
@@ -180,7 +234,7 @@ def _probe_urls_in_browser(
 
 
 def _browser_fetch_once(page: Any, url: str) -> dict[str, Any]:
-    """Single fetch from the live browser session."""
+    """Single GET from the live browser session."""
     entry: dict[str, Any] = {
         "http_status": None,
         "content_type": None,
@@ -189,7 +243,7 @@ def _browser_fetch_once(page: Any, url: str) -> dict[str, Any]:
         "top_level_keys": None,
     }
     last: dict[str, Any] = {}
-    for _ in range(3):
+    for _ in range(5):
         last = page.evaluate(FETCH_JS, url)
         entry["http_status"] = last.get("status")
         entry["content_type"] = last.get("contentType")
@@ -233,10 +287,10 @@ def _print_session_summary(result: dict[str, Any]) -> None:
 def _fetch_rest_from_loaded_app(
     page: Any,
     rest_url: str | None,
-    app_url: str | None = None,
+    rest_calls: list[dict[str, Any]],
     config: DuoBrowserConfig | None = None,
 ) -> dict[str, Any]:
-    """Wait for the app to redirect itself, record REST XHRs, then fetch JSON."""
+    """Wait for the app to redirect itself, then GET JSON in the page."""
     browser_config = config or DuoBrowserConfig.degree_explorer()
     result: dict[str, Any] = {
         "http_status": None,
@@ -244,29 +298,8 @@ def _fetch_rest_from_loaded_app(
         "json": None,
         "error_text": None,
         "final_url": page.url,
-        "rest_calls": [],
+        "rest_calls": rest_calls,
     }
-    rest_calls: list[dict[str, Any]] = []
-    rest_prefix = browser_config.rest_path_fragment
-
-    def on_response(response: Any) -> None:
-        url = response.url
-        if rest_prefix not in url:
-            return
-        parsed = urlparse(url)
-        path = parsed.path
-        if rest_prefix in path:
-            path = path.split(rest_prefix, 1)[1]
-            path = "/" + path.lstrip("/")
-        rest_calls.append(
-            {
-                "method": response.request.method,
-                "path": path,
-                "status": response.status,
-            }
-        )
-
-    page.on("response", on_response)
     if browser_config.app_loaded_pattern:
         try:
             page.wait_for_url(

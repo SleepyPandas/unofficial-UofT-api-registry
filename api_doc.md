@@ -47,6 +47,16 @@ Internal student planning tool providing academic history, marks, and program pr
 | Method | Endpoint | Auth Required | Unauthenticated Behavior | Purpose |
 |---|---|---|---|---|
 | GET | `/dxStudent/getAcademicHistory` | Yes (UTORid SSO) | HTTP 302 redirect to UTORauth | Student course history, session marks, and requirements |
+| GET | `/dxStudent/getStudentData` | Yes (UTORid SSO) | HTTP 302 redirect to UTORauth | Current Status student payload |
+| GET | `/dxStudent/getStudentRecord` | Yes (UTORid SSO) | HTTP 302 redirect to UTORauth | Current Status student record |
+| GET | `/dxMenu/getStudentUserData` | Yes (UTORid SSO) | HTTP 302 redirect to UTORauth | Menu/session user payload |
+| GET | `/dxMenu/getStudentMenu` | Yes (UTORid SSO) | HTTP 302 redirect to UTORauth | Student navigation menu |
+| GET | `/messages/getMessages` | Yes (UTORid SSO) | HTTP 302 redirect to UTORauth | UI string catalog (not a student inbox) |
+| GET | `/dxMenu/getSessionTimeouts` | Yes (UTORid SSO) | HTTP 302 redirect to UTORauth | Session timeout settings |
+| GET | `/dxPlanner/getPlanner` | Yes (UTORid SSO) | HTTP 302 redirect to UTORauth | Planner timelines and primary-plan flags |
+| GET | `/dxPlanner/getCellDetails` | Yes (UTORid SSO) | HTTP 302 redirect to UTORauth | Planner cell details after a timeline click |
+
+Write/POST routes are not catalogued yet.
 
 ---
 
