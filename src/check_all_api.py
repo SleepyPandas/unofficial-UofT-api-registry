@@ -19,6 +19,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
@@ -38,6 +39,7 @@ from apis.degree_explorer import (
 from apis.timetable_builder import TimetableBuilderAPI
 from env_file import load_env_file
 
+EASTERN = ZoneInfo("America/Toronto")
 DATA_DIR = REPO_ROOT / "data"
 APIS_PATH = DATA_DIR / "apis.json"
 BADGE_COLORS = {
@@ -337,7 +339,7 @@ def write_status_files(payload: dict[str, Any], output_path: Path) -> None:
     checked_badge = {
         "schemaVersion": 1,
         "label": "last checked",
-        "message": payload.get("checked_at") or "never",
+        "message": _eastern_badge_time(payload.get("checked_at")),
         "color": "blue",
         "cacheSeconds": 300,
     }
@@ -345,6 +347,19 @@ def write_status_files(payload: dict[str, Any], output_path: Path) -> None:
         json.dumps(checked_badge, indent=2) + "\n",
         encoding="utf-8",
     )
+
+
+def _eastern_badge_time(checked_at: str | None) -> str:
+    """Format a UTC ISO timestamp as a short Eastern Time badge label."""
+    if not checked_at:
+        return "never"
+    try:
+        instant = datetime.fromisoformat(checked_at.replace("Z", "+00:00"))
+    except ValueError:
+        return checked_at
+    local = instant.astimezone(EASTERN)
+    hour = local.strftime("%I").lstrip("0") or "12"
+    return f"{local.strftime('%b')} {local.day}, {hour}:{local.strftime('%M')} {local.strftime('%p')} ET"
 
 
 def _latency_ms(started: float) -> int:

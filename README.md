@@ -29,13 +29,15 @@ Student payloads are never published. The live status records HTTP codes, latenc
 
 <!-- registry:start -->
 
-[![Last checked](https://img.shields.io/endpoint?url=https%3A%2F%2Fsleepypandas.github.io%2Funofficial-UofT-api-registry%2Fbadges%2Fchecked-at.json&style=for-the-badge)](https://sleepypandas.github.io/unofficial-UofT-api-registry/status.json)
+<p>
+  <a href="https://sleepypandas.github.io/unofficial-UofT-api-registry/status.json"><img alt="Last checked" height="32" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fsleepypandas.github.io%2Funofficial-UofT-api-registry%2Fbadges%2Fchecked-at.json&amp;style=for-the-badge"></a>
+</p>
 
-| Service | Status | Auth | Method | Endpoint | Notes |
-|---|---|---|---|---|---|
-| Degree Explorer | ![Degree Explorer status](https://img.shields.io/endpoint?url=https%3A%2F%2Fsleepypandas.github.io%2Funofficial-UofT-api-registry%2Fbadges%2Fdegree-explorer.json&style=for-the-badge) | UTORid | GET | [`/dxStudent/getAcademicHistory`](https://degreeexplorer.utoronto.ca/degreeExplorer/rest/dxStudent/getAcademicHistory) | Unofficial. Student academic history and planner. Undocumented internal web API, not a supported public contract. Open the site root; after UTORauth/Duo the app redirects to Current Status, then REST calls work from that session. |
-| ACORN | ![ACORN status](https://img.shields.io/endpoint?url=https%3A%2F%2Fsleepypandas.github.io%2Funofficial-UofT-api-registry%2Fbadges%2Facorn.json&style=for-the-badge) | UTORid | GET | [`/enrolment/eligible-registrations`](https://acorn.utoronto.ca/sws/rest/enrolment/eligible-registrations) | Unofficial. Course enrolment portal. GET reads only. Open `/sws`; after UTORauth/Duo the dashboard REST calls work from that session. Enrolment payloads are never published. |
-| Timetable Builder (TTB) | ![Timetable Builder status](https://img.shields.io/endpoint?url=https%3A%2F%2Fsleepypandas.github.io%2Funofficial-UofT-api-registry%2Fbadges%2Ftimetable-builder.json&style=for-the-badge) | None | GET | [`/current-session`](https://api.easi.utoronto.ca/ttb/current-session) | Unofficial. Course schedules, timetable sections, room assignments, and instructors. Public and unauthenticated. |
+| Service | Status | Auth | Endpoint |
+|---|---|---|---|
+| Degree Explorer | <img alt="Degree Explorer status" height="28" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fsleepypandas.github.io%2Funofficial-UofT-api-registry%2Fbadges%2Fdegree-explorer.json&amp;style=for-the-badge"> | UTORid | [`/dxStudent/getAcademicHistory`](https://degreeexplorer.utoronto.ca/degreeExplorer/rest/dxStudent/getAcademicHistory) |
+| ACORN | <img alt="ACORN status" height="28" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fsleepypandas.github.io%2Funofficial-UofT-api-registry%2Fbadges%2Facorn.json&amp;style=for-the-badge"> | UTORid | [`/enrolment/eligible-registrations`](https://acorn.utoronto.ca/sws/rest/enrolment/eligible-registrations) |
+| Timetable Builder | <img alt="Timetable Builder status" height="28" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fsleepypandas.github.io%2Funofficial-UofT-api-registry%2Fbadges%2Ftimetable-builder.json&amp;style=for-the-badge"> | None | [`/current-session`](https://api.easi.utoronto.ca/ttb/current-session) |
 
 <!-- registry:end -->
 
