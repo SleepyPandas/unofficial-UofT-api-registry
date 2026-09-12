@@ -268,5 +268,5 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-
-scratch
+# Local ACORN experiments and one-off probes (not published)
+scratch/

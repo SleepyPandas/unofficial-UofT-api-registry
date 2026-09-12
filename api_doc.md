@@ -60,7 +60,48 @@ Write/POST routes are not catalogued yet.
 
 ---
 
-## 3. Quercus / Canvas REST API (Tenant)
+## 3. ACORN Student Web Services API
+
+U of T course enrolment portal. After UTORauth SAML login and Duo, the web app calls JSON GET routes under `/sws/rest`. This catalog covers verified reads only. Mutation routes (for example `/enrolment/course/modify`) are not documented and must not be called.
+
+- Base URL: `https://acorn.utoronto.ca/sws/rest`
+- Web UI: `https://acorn.utoronto.ca/sws`
+- Authentication: UTORid via UTORauth SAML SSO (`idpz.utorauth.utoronto.ca`) plus Duo MFA
+- Official Developer Support: None (Internal web API)
+- JSON Schema Catalog: [`json/acorn.json`](json/acorn.json)
+- Unauthenticated REST GETs return HTTP 302 to UTORauth
+- Enrolment, financial, and identity payloads must never be logged or committed
+
+Later enrolment GETs reuse `registrationParams` (and candidacy codes) from `GET /enrolment/eligible-registrations`. Meeting times live in `meetings[].times[]` (`day.dayCode`, `startTime`, `endTime`, `buildingCode`, `room`, `instructors`). Waitlist rank is on `waitlistRank` from `/enrolment/course/view`.
+
+### Endpoint Table
+
+| Method | Endpoint | Query / Path Parameters | Purpose | Status |
+|---|---|---|---|---|
+| GET | `/enrolment/eligible-registrations` | None | Active registrations and `registrationParams` bundle | Verified 200 |
+| GET | `/enrolment/current-registrations` | None | Currently active registration records | Verified 200 |
+| GET | `/enrolment/course/enrolled-courses` | `registrationParams` query fields (`postCode`, `sessionCode`, org codes, `yearOfStudy`, ...) | Enrolled / waitlisted / dropped buckets (`APP` / `WAIT` / `DROP`) | Verified 200 |
+| GET | `/dashboard/courseRegistration/enrolledCourses` | None | Dashboard enrolled-course list | Verified 200 |
+| GET | `/enrolment/plan` | `candidacyPostCode`, `candidacySessionCode`, `sessionCode` | Enrolment cart (planned, not enrolled) | Verified 200 |
+| GET | `/enrolment/course/view` | Course + `registrationParams` (`courseCode`, `courseSessionCode`, `sectionCode`, ...) | Single-course detail, waitlist rank, space | Verified 200 |
+| GET | `/enrolment/start-times` | None | Enrolment start times / windows | Verified 200 |
+| GET | `/enrolment/posts-with-invite-status` | None | Program/POSt invitations | Verified 200 |
+| GET | `/profile/studentRegistrationInfo` | None | Registration and financial-hold status | Verified 200 |
+| GET | `/notification` | None | Inbox notifications and action notices | Verified 200 |
+| GET | `/acorn-check-list/items` | None | Pre-enrolment checklist items | Verified 200 |
+| GET | `/acorn-check-list/todos` | None | Dashboard checklist todos | Verified 200 |
+| GET | `/financial-account/tuitionPrepayment` | None | Tuition prepayment status | Verified 200 |
+| GET | `/fee-payment/tuitionFeeAdmissionDeposits` | None | Admission deposits (empty array observed) | Verified 200 |
+| GET | `/net-cost-view` | None | Net cost / financial-aid session view | Verified 200 |
+| GET | `/dashboard/finance/dentalOptOutSessionCode` | None | Dental plan opt-out session code | Verified 200 |
+| GET | `/dashboard/eventCalendar/getDashboardEvents/TODAY` | None | Dashboard events for today | Verified 200 |
+| GET | `/awards` | None | Awards and scholarships | Observed 500 |
+
+Guessed paths that are **not** real routes (HTTP 404): `/enrolment/course/search-courses`, `/student/summary`.
+
+---
+
+## 4. Quercus / Canvas REST API (Tenant)
 
 University of Toronto learning management system tenant operated on Instructure Canvas.
 
@@ -81,7 +122,7 @@ University of Toronto learning management system tenant operated on Instructure 
 
 ---
 
-## 4. TSpace / Scholaris DSpace REST API
+## 5. TSpace / Scholaris DSpace REST API
 
 Open-access research repository for University of Toronto research publications, theses, and papers.
 
@@ -101,7 +142,7 @@ Open-access research repository for University of Toronto research publications,
 
 ---
 
-## 5. Borealis (U of T Dataverse)
+## 6. Borealis (U of T Dataverse)
 
 Shared research data repository for University of Toronto datasets and research data.
 

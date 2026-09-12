@@ -1,10 +1,13 @@
 # Unofficial UofT API Registry
 
-> **Work in progress.** This registry is incomplete. Only Timetable Builder and Degree Explorer are health-checked so far. Endpoints here are unofficial unless marked otherwise. Do not treat this as a University of Toronto service.
+> **Work in progress.** This registry is incomplete. Timetable Builder, Degree Explorer, and ACORN are health-checked so far. Endpoints here are unofficial unless marked otherwise. Do not treat this as a University of Toronto service.
 
 A simple index and uptime monitor for University of Toronto APIs, machine-readable services, and data endpoints.
 
 This tracks APIs that U of T uses which might be useful to students and developers. Reliability of those APIs is not guaranteed, and neither is this registry. It is a start.
+
+> [!CAUTION]
+> These endpoints are unofficial. They can break, move, or change shape without announcement. Paths, auth, and JSON fields may stop matching this catalog at any time.
 
 ## Overview
 
@@ -31,6 +34,7 @@ Student payloads are never published. The live status records HTTP codes, latenc
 | Service | Status | Auth | Method | Endpoint | Notes |
 |---|---|---|---|---|---|
 | Degree Explorer | ![Degree Explorer status](https://img.shields.io/endpoint?url=https%3A%2F%2Fsleepypandas.github.io%2Funofficial-UofT-api-registry%2Fbadges%2Fdegree-explorer.json&style=for-the-badge) | UTORid | GET | [`/dxStudent/getAcademicHistory`](https://degreeexplorer.utoronto.ca/degreeExplorer/rest/dxStudent/getAcademicHistory) | Unofficial. Student academic history and planner. Undocumented internal web API, not a supported public contract. Open the site root; after UTORauth/Duo the app redirects to Current Status, then REST calls work from that session. |
+| ACORN | ![ACORN status](https://img.shields.io/endpoint?url=https%3A%2F%2Fsleepypandas.github.io%2Funofficial-UofT-api-registry%2Fbadges%2Facorn.json&style=for-the-badge) | UTORid | GET | [`/enrolment/eligible-registrations`](https://acorn.utoronto.ca/sws/rest/enrolment/eligible-registrations) | Unofficial. Course enrolment portal. GET reads only. Open `/sws`; after UTORauth/Duo the dashboard REST calls work from that session. Enrolment payloads are never published. |
 | Timetable Builder (TTB) | ![Timetable Builder status](https://img.shields.io/endpoint?url=https%3A%2F%2Fsleepypandas.github.io%2Funofficial-UofT-api-registry%2Fbadges%2Ftimetable-builder.json&style=for-the-badge) | None | GET | [`/current-session`](https://api.easi.utoronto.ca/ttb/current-session) | Unofficial. Course schedules, timetable sections, room assignments, and instructors. Public and unauthenticated. |
 
 <!-- registry:end -->
@@ -54,6 +58,17 @@ Student payloads are never published. The live status records HTTP codes, latenc
 - Detailed Catalog: [`json/degree_explorer.json`](json/degree_explorer.json)
 
 `get_academic_history()` returns academic history JSON (facultyCourses, sessions, courses, marks). `view_academic_history()` returns counts and top-level keys only, so it is safe to print.
+
+## ACORN
+
+- Human UI: https://acorn.utoronto.ca/sws
+- REST base: `https://acorn.utoronto.ca/sws/rest`
+- Confirmed reads: `GET /enrolment/eligible-registrations`, `GET /enrolment/course/enrolled-courses`, `GET /enrolment/course/view`, plus dashboard finance/checklist/notification routes
+- Auth: UTORid via UTORauth SAML (`idpz.utorauth.utoronto.ca`) plus Duo
+- Official support: no. This is an internal web API used by the ACORN frontend. GET only; mutation routes are not cataloged.
+- Detailed Catalog: [`json/acorn.json`](json/acorn.json)
+
+Student enrolment and financial payloads are never published. Local helpers return counts and top-level keys only.
 
 ## Timetable Builder (TTB)
 
@@ -86,7 +101,7 @@ On Windows with the repo venv:
 .venv\Scripts\python.exe src/check_all_api.py
 ```
 
-Degree Explorer login hits Duo. A Chromium window opens. Enter a Duo Mobile passcode in the terminal or in that window (push also works). GitHub Actions cannot complete Duo, so the runner keeps the unauthenticated **auth required** probe unless you are testing locally.
+Degree Explorer and ACORN login hit Duo. A Chromium window opens. Enter a Duo Mobile passcode in the terminal or in that window (push also works). GitHub Actions cannot complete Duo, so the runner keeps the unauthenticated **auth required** probe unless you are testing locally.
 
 ## GitHub Actions
 
@@ -94,7 +109,7 @@ The workflow `.github/workflows/api-health.yml` runs every 12 hours and on manua
 
 Put `UOFT_UTORID` and `UOFT_PASSWORD` in **repository secrets** (Settings → Secrets and variables → Actions). This job has no GitHub Environment, so environment secrets are not read.
 
-The names match `.env`. The runner can submit UTORid and password, but it cannot finish Duo, so Degree Explorer stays **auth required** when the unauthenticated 302 is healthy. Do not add `UOFT_MFA_CODE` on GitHub.
+The names match `.env`. The runner can submit UTORid and password, but it cannot finish Duo, so Degree Explorer and ACORN stay **auth required** when the unauthenticated 302 is healthy. Do not add `UOFT_MFA_CODE` on GitHub.
 
 The workflow publishes `status.json` and the badge endpoints as a GitHub Pages artifact. It does not commit generated status updates. Set **Settings → Pages → Source** to **GitHub Actions** once before the first deployment.
 
@@ -107,14 +122,15 @@ unofficial-UofT-api-registry/
 |-- data/
 |   `-- apis.json
 |-- json/
+|   |-- acorn.json
 |   |-- degree_explorer.json
 |   `-- timetable_builder.json
 |-- src/
+|   |-- check_all_api.py
 |   `-- apis/
+|       |-- acorn.py
 |       |-- degree_explorer.py
 |       `-- timetable_builder.py
-|-- scripts/
-|   `-- check_apis.py
 `-- .github/
     `-- workflows/
         `-- api-health.yml

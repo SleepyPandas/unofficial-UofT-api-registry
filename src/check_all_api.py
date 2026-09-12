@@ -23,6 +23,12 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
+from apis.acorn import (
+    ELIGIBLE_REGISTRATIONS_PATH,
+    AcornAuthError,
+    AcornClient,
+    AcornError,
+)
 from apis.degree_explorer import (
     GET_ACADEMIC_HISTORY_PATH,
     DegreeExplorerAuthError,
@@ -69,6 +75,8 @@ def main() -> int:
     for api in registry.get("apis", []):
         if api.get("id") == "degree-explorer":
             results.append(check_degree_explorer(api))
+        elif api.get("id") == "acorn":
+            results.append(check_acorn(api))
         elif api.get("id") == "timetable-builder":
             results.append(check_timetable_builder(api))
         else:
@@ -165,6 +173,87 @@ def check_degree_explorer(api: dict[str, Any]) -> dict[str, Any]:
         status_code=200,
         latency_ms=_latency_ms(started),
         detail="Authenticated GET /dxStudent/getAcademicHistory returned JSON.",
+    )
+
+
+def check_acorn(api: dict[str, Any]) -> dict[str, Any]:
+    """Probe ACORN reachability, then optionally authenticate."""
+    endpoint = api["endpoints"][0]
+    started = time.perf_counter()
+    client = AcornClient()
+    try:
+        probe = client.probe_reachability(endpoint.get("path", ELIGIBLE_REGISTRATIONS_PATH))
+    except Exception as exc:
+        return result_row(
+            api,
+            endpoint,
+            status="down",
+            status_code=None,
+            latency_ms=_latency_ms(started),
+            detail=f"Reachability probe failed: {exc}",
+        )
+
+    if not probe["redirects_to_idp"]:
+        status = "down" if (probe["status_code"] or 0) >= 500 else "degraded"
+        return result_row(
+            api,
+            endpoint,
+            status=status,
+            status_code=probe["status_code"],
+            latency_ms=_latency_ms(started),
+            detail=(
+                "Expected 302 to idpz.utorauth.utoronto.ca, "
+                f"got HTTP {probe['status_code']} location={probe['location_host'] or 'none'}"
+            ),
+        )
+
+    utorid = os.environ.get("UOFT_UTORID", "").strip()
+    password = os.environ.get("UOFT_PASSWORD", "")
+    reachable = result_row(
+        api,
+        endpoint,
+        status="auth_required",
+        status_code=probe["status_code"],
+        latency_ms=_latency_ms(started),
+        detail="Service redirected to UTORauth, which is the expected unauthenticated response.",
+    )
+    if not utorid or not password:
+        return reachable
+
+    auth_client = AcornClient()
+    try:
+        auth_client.login(
+            utorid,
+            password,
+            mfa_code=os.environ.get("UOFT_MFA_CODE", "").strip() or None,
+        )
+        registrations = auth_client.get_eligible_registrations()
+    except AcornAuthError as exc:
+        reachable["detail"] = (
+            "Service is reachable via UTORauth. Authenticated probe did not finish: "
+            f"{exc}"
+        )
+        return reachable
+    except AcornError as exc:
+        reachable["detail"] = (
+            "Service is reachable via UTORauth. Authenticated GET failed after login: "
+            f"{exc}"
+        )
+        return reachable
+
+    if not isinstance(registrations, list):
+        reachable["detail"] = (
+            "Service is reachable via UTORauth. Authenticated GET returned JSON "
+            "that was not an array."
+        )
+        return reachable
+    return result_row(
+        api,
+        endpoint,
+        status="operational",
+        status_code=200,
+        latency_ms=_latency_ms(started),
+        detail="Authenticated GET /enrolment/eligible-registrations returned JSON.",
     )
 
 

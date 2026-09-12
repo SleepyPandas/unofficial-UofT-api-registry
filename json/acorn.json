@@ -1,0 +1,604 @@
+{
+  "api": {
+    "id": "acorn",
+    "name": "ACORN",
+    "description": "U of T course enrolment portal (Student Web Services). After UTORauth SAML and Duo, the web client calls JSON routes under /sws/rest. This catalog covers GET reads only; enrolment mutation routes are not documented.",
+    "base_url": "https://acorn.utoronto.ca/sws/rest",
+    "human_url": "https://acorn.utoronto.ca/sws",
+    "operator": "University of Toronto",
+    "auth": "UTORid via UTORauth SAML SSO (idpz.utorauth.utoronto.ca) plus Duo MFA",
+    "official_support": false,
+    "read_only": true,
+    "verified": "2026-09",
+    "security_note": "Enrolment, financial, and identity data are highly sensitive. Credentials, session cookies, and student payloads must never be logged or committed. This catalog lists field names and types only.",
+    "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+    "endpoints": [
+      {
+        "id": "get-eligible-registrations",
+        "method": "GET",
+        "path": "/enrolment/eligible-registrations",
+        "purpose": "Active registration period(s) and the parameter bundle required by later enrolment GETs.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json",
+        "status": "verified_200",
+        "response_schema": {
+          "type": "array",
+          "item": {
+            "candidacyPostCode": "string",
+            "candidacySessionCode": "string",
+            "sessionDescription": "string",
+            "post": {
+              "description": "string"
+            },
+            "registrationParams": {
+              "postCode": "string",
+              "postDescription": "string",
+              "sessionCode": "string",
+              "sessionDescription": "string",
+              "status": "string",
+              "assocOrgCode": "string",
+              "acpDuration": "string",
+              "levelOfInstruction": "string",
+              "typeOfProgram": "string",
+              "designationCode1": "string",
+              "primaryOrgCode": "string",
+              "secondaryOrgCode": "string",
+              "collaborativeOrgCode": "string",
+              "adminOrgCode": "string",
+              "coSecondaryOrgCode": "string",
+              "yearOfStudy": "string",
+              "postAcpDuration": "string"
+            }
+          }
+        }
+      },
+      {
+        "id": "get-current-registrations",
+        "method": "GET",
+        "path": "/enrolment/current-registrations",
+        "purpose": "Currently active registration record(s).",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json",
+        "status": "verified_200",
+        "response_schema": {
+          "type": "array"
+        }
+      },
+      {
+        "id": "get-enrolled-courses",
+        "method": "GET",
+        "path": "/enrolment/course/enrolled-courses",
+        "purpose": "Enrolled, waitlisted, and dropped courses for one registration, including meeting times, rooms, and instructors.",
+        "parameters": [
+          {
+            "name": "postCode",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "Copied from eligible-registrations registrationParams.postCode."
+          },
+          {
+            "name": "postDescription",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sessionCode",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "Copied from registrationParams.sessionCode (e.g. 20269)."
+          },
+          {
+            "name": "sessionDescription",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "assocOrgCode",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "acpDuration",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "levelOfInstruction",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "typeOfProgram",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "designationCode1",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "primaryOrgCode",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "secondaryOrgCode",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "collaborativeOrgCode",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "adminOrgCode",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "coSecondaryOrgCode",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "yearOfStudy",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "postAcpDuration",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json",
+        "status": "verified_200",
+        "notes": "Query fields are copied from registrationParams on an eligible-registrations item. Waitlist rank is often missing here; use /enrolment/course/view.",
+        "response_schema": {
+          "type": "object",
+          "keys": {
+            "APP": "array of course objects (enrolled)",
+            "WAIT": "array of course objects (waitlisted)",
+            "DROP": "array of course objects (dropped)"
+          },
+          "course": {
+            "code": "string",
+            "courseCode": "string",
+            "sectionCode": "string",
+            "title": "string",
+            "name": "string",
+            "status": "string",
+            "sessionCode": "string",
+            "waitlistSectionNo": "string",
+            "waitlistMeetings": "string",
+            "meetings": "array of meeting objects"
+          },
+          "meeting": {
+            "sectionNo": "string",
+            "displayName": "string",
+            "teachMethod": "string",
+            "displayTime": "string",
+            "deliveryMode": "string",
+            "commaSeparatedInstructorNames": "string",
+            "waitlistRank": "integer or null",
+            "enrollmentSpaceAvailable": "integer",
+            "enrollSpace": "integer",
+            "totalSpace": "integer",
+            "times": "array of time slot objects",
+            "meetingResources": "array of instructor resource objects"
+          },
+          "time_slot": {
+            "day": {
+              "dayCode": "string",
+              "dayName": "string"
+            },
+            "startTime": "string",
+            "endTime": "string",
+            "buildingCode": "string",
+            "room": "string",
+            "instructors": "array of string"
+          },
+          "meeting_resource": {
+            "instructorFirstName": "string",
+            "instructorSurname": "string"
+          }
+        }
+      },
+      {
+        "id": "get-dashboard-enrolled-courses",
+        "method": "GET",
+        "path": "/dashboard/courseRegistration/enrolledCourses",
+        "purpose": "Dashboard enrolled-course list for the current session.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json",
+        "status": "verified_200",
+        "response_schema": {
+          "type": "object",
+          "keys": {
+            "enrolledCourses": "array",
+            "sessionDescription": "string"
+          }
+        }
+      },
+      {
+        "id": "get-enrolment-plan",
+        "method": "GET",
+        "path": "/enrolment/plan",
+        "purpose": "Courses in the enrolment cart (planned, not yet enrolled).",
+        "parameters": [
+          {
+            "name": "candidacyPostCode",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "From an eligible-registrations item."
+          },
+          {
+            "name": "candidacySessionCode",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "From an eligible-registrations item."
+          },
+          {
+            "name": "sessionCode",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "From registrationParams.sessionCode."
+          }
+        ],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json",
+        "status": "verified_200",
+        "response_schema": {
+          "type": "array",
+          "item": {
+            "courseCode": "string",
+            "sectionCode": "string",
+            "activityChoices": "lecture, tutorial, and practical section numbers"
+          }
+        }
+      },
+      {
+        "id": "get-course-view",
+        "method": "GET",
+        "path": "/enrolment/course/view",
+        "purpose": "Single course/section detail, including waitlist rank and per-activity space.",
+        "parameters": [
+          {
+            "name": "courseCode",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "Course code from an enrolled-courses row (e.g. CSC209H1)."
+          },
+          {
+            "name": "courseSessionCode",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "Session code from the course row, else registrationParams.sessionCode."
+          },
+          {
+            "name": "sectionCode",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "Term section code (F, S, or Y)."
+          },
+          {
+            "name": "subjectCode1",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "useSws",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "activityApprovedInd",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "activityApprovedOrg",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json",
+        "status": "verified_200",
+        "notes": "Also send the same registrationParams query fields as /enrolment/course/enrolled-courses. Course payload is usually under responseObject and uses the same meeting/times shape as enrolled-courses. waitlistRank is populated here.",
+        "response_schema": {
+          "type": "object",
+          "keys": {
+            "responseObject": "course object (same fields as enrolled-courses course rows)"
+          },
+          "course": {
+            "code": "string",
+            "sectionCode": "string",
+            "title": "string",
+            "sessionCode": "string",
+            "waitlistSectionNo": "string",
+            "waitlistMeetings": "string",
+            "meetings": "array of meeting objects with waitlistRank and times[]"
+          }
+        }
+      },
+      {
+        "id": "get-enrolment-start-times",
+        "method": "GET",
+        "path": "/enrolment/start-times",
+        "purpose": "Course enrolment start times and registration windows.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json",
+        "status": "verified_200",
+        "response_schema": {
+          "type": "object",
+          "keys": {
+            "startTimesList": "array",
+            "empty": "boolean",
+            "sqpda": "object"
+          }
+        }
+      },
+      {
+        "id": "get-posts-with-invite-status",
+        "method": "GET",
+        "path": "/enrolment/posts-with-invite-status",
+        "purpose": "Program/POSt invitations and multi-program status.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json",
+        "status": "verified_200",
+        "response_schema": {
+          "type": "object",
+          "keys": {
+            "multiple": "boolean",
+            "sessions": "array",
+            "sqpda": "object"
+          }
+        }
+      },
+      {
+        "id": "get-student-registration-info",
+        "method": "GET",
+        "path": "/profile/studentRegistrationInfo",
+        "purpose": "Registration and financial-hold status for the logged-in student.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json",
+        "status": "verified_200",
+        "response_schema": {
+          "type": "object",
+          "keys": {
+            "personId": "string",
+            "financialStatus": "object",
+            "financialStatuses": "array",
+            "registrationStatusList": "array",
+            "studentHasFutureExams": "boolean"
+          }
+        }
+      },
+      {
+        "id": "get-notification",
+        "method": "GET",
+        "path": "/notification",
+        "purpose": "ACORN inbox notifications and action-required notices.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json",
+        "status": "verified_200",
+        "response_schema": {
+          "type": "object",
+          "keys": {
+            "notifications": "array",
+            "actionNotices": "array",
+            "numResults": "integer",
+            "numPages": "integer",
+            "itemsPerPage": "integer",
+            "currentDate": "string"
+          }
+        }
+      },
+      {
+        "id": "get-acorn-check-list-items",
+        "method": "GET",
+        "path": "/acorn-check-list/items",
+        "purpose": "Pre-enrolment and registration checklist items.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json",
+        "status": "verified_200",
+        "response_schema": {
+          "type": "object",
+          "keys": {
+            "items": "array",
+            "isStudentRegistered": "boolean",
+            "preBlockEndDate": "string"
+          }
+        }
+      },
+      {
+        "id": "get-acorn-check-list-todos",
+        "method": "GET",
+        "path": "/acorn-check-list/todos",
+        "purpose": "Checklist todo tasks shown on the ACORN dashboard.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json",
+        "status": "verified_200",
+        "response_schema": {
+          "type": "object",
+          "keys": {
+            "items": "array",
+            "isStudentRegistered": "boolean",
+            "preBlockEndDate": "string"
+          }
+        }
+      },
+      {
+        "id": "get-tuition-prepayment",
+        "method": "GET",
+        "path": "/financial-account/tuitionPrepayment",
+        "purpose": "Tuition prepayment status.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json",
+        "status": "verified_200",
+        "response_schema": {
+          "type": "object",
+          "keys": {
+            "statusCd": "string",
+            "tuitionPrepayments": "array"
+          }
+        }
+      },
+      {
+        "id": "get-tuition-fee-admission-deposits",
+        "method": "GET",
+        "path": "/fee-payment/tuitionFeeAdmissionDeposits",
+        "purpose": "Admission deposit records.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json",
+        "status": "verified_200",
+        "notes": "Observed as an empty JSON array.",
+        "response_schema": {
+          "type": "array"
+        }
+      },
+      {
+        "id": "get-net-cost-view",
+        "method": "GET",
+        "path": "/net-cost-view",
+        "purpose": "Net cost and financial-aid session view.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json",
+        "status": "verified_200",
+        "response_schema": {
+          "type": "object",
+          "keys": {
+            "sessions": "array",
+            "currentActiveSession": "string",
+            "displayCode": "string",
+            "osapPaidInLateFall": "boolean"
+          }
+        }
+      },
+      {
+        "id": "get-dental-opt-out-session-code",
+        "method": "GET",
+        "path": "/dashboard/finance/dentalOptOutSessionCode",
+        "purpose": "Dental plan opt-out session code used by the dashboard finance widget.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json",
+        "status": "verified_200",
+        "response_schema": {
+          "type": "object",
+          "keys": {
+            "value": "string"
+          }
+        }
+      },
+      {
+        "id": "get-dashboard-events-today",
+        "method": "GET",
+        "path": "/dashboard/eventCalendar/getDashboardEvents/TODAY",
+        "purpose": "Dashboard events for today (deadlines, enrolment dates).",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json",
+        "status": "verified_200",
+        "response_schema": {
+          "type": "object",
+          "keys": {
+            "dashboardEventList": "array",
+            "eventListDate": "string"
+          }
+        }
+      },
+      {
+        "id": "get-awards",
+        "method": "GET",
+        "path": "/awards",
+        "purpose": "Awards and scholarships for the logged-in student.",
+        "parameters": [],
+        "auth_required": true,
+        "unauthenticated_behavior": "Returns HTTP 302 redirecting to https://idpz.utorauth.utoronto.ca/idp/profile/SAML2/Redirect/SSO",
+        "response_type": "application/json",
+        "status": "verified_500",
+        "notes": "Route exists (dashboard calls it) but returned HTTP 500 on the Sep 2026 authenticated probe. Not treated as operational."
+      }
+    ],
+    "not_endpoints": [
+      {
+        "method": "GET",
+        "path": "/enrolment/course/search-courses",
+        "status": "not_found",
+        "notes": "Guessed path. HTTP 404 in the Sep 2026 probe; not a real ACORN REST route."
+      },
+      {
+        "method": "GET",
+        "path": "/student/summary",
+        "status": "not_found",
+        "notes": "Guessed path. HTTP 404 in the Sep 2026 probe; not a real ACORN REST route."
+      }
+    ]
+  }
+}

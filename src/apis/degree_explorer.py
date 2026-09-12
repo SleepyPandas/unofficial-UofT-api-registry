@@ -21,7 +21,7 @@ from urllib.parse import urljoin, urlparse
 
 import requests
 
-from .duo_mfa import DuoMfaError, complete_duo_in_browser
+from .duo_mfa import DuoBrowserConfig, DuoMfaError, complete_duo_in_browser
 
 BASE_URL = "https://degreeexplorer.utoronto.ca/degreeExplorer/rest"
 APP_URL = "https://degreeexplorer.utoronto.ca/"
@@ -279,6 +279,8 @@ class DegreeExplorerClient:
                         utorid=utorid,
                         password=password,
                         rest_url=self.base_url + GET_ACADEMIC_HISTORY_PATH,
+                        app_url=APP_URL,
+                        browser_config=DuoBrowserConfig.degree_explorer(),
                         keep_open=keep_open,
                         keep_open_timeout_ms=keep_open_timeout_ms,
                         on_ready=on_ready,
