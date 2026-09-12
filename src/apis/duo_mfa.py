@@ -9,14 +9,16 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Callable
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlparse
 
 import requests
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
 from playwright.sync_api import sync_playwright
 
 DUO_WAIT_MS = 180_000
+KEEP_OPEN_WAIT_MS = 900_000
 
 
 class DuoMfaError(RuntimeError):
@@ -31,12 +33,17 @@ def complete_duo_in_browser(
     password: str | None = None,
     rest_url: str | None = None,
     app_url: str | None = None,
+    keep_open: bool = False,
+    keep_open_timeout_ms: int | None = None,
+    on_ready: Callable[[Any, Any, dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Open the Duo prompt and copy cookies back after MFA succeeds.
 
     Type a Duo Mobile passcode in the Chromium window, or approve a push.
     Optional mfa_code is filled when the passcode field is found.
     If rest_url is set, GET it from the same browser context after login.
+    If keep_open is true, Chromium stays up after login until the window is
+    closed or KEEP_OPEN_WAIT_MS elapses. on_ready runs while it is still open.
     """
     code = (mfa_code or "").strip()
 
@@ -60,6 +67,8 @@ def complete_duo_in_browser(
         except Exception:
             pass
         page = context.new_page()
+        rest_calls: list[dict[str, Any]] = []
+        page.on("response", lambda response: _record_rest_call(response, rest_calls))
         page.goto(duo_url, wait_until="domcontentloaded")
         if page.locator("#username").count() and utorid and password:
             page.fill("#username", utorid)
@@ -80,43 +89,68 @@ def complete_duo_in_browser(
                 "Timed out waiting for Degree Explorer after Duo. "
                 "Enter the passcode in the browser window and try again."
             ) from exc
-        result = _fetch_rest_from_loaded_app(page, rest_url, app_url)
+        result = _fetch_rest_from_loaded_app(page, rest_url, rest_calls)
         _copy_playwright_cookies(context, session)
-        page.wait_for_timeout(2_000)
-        browser.close()
+        if on_ready is not None:
+            on_ready(page, context, result)
+        if keep_open:
+            print(
+                "Chromium is staying open. Click around Degree Explorer if you want; "
+                "close the window when you are done."
+            )
+            try:
+                wait_ms = KEEP_OPEN_WAIT_MS if keep_open_timeout_ms is None else keep_open_timeout_ms
+                page.wait_for_event("close", timeout=wait_ms)
+            except PlaywrightTimeout:
+                print("Keep-open wait timed out; closing Chromium.")
+            except Exception:
+                pass
+        else:
+            page.wait_for_timeout(2_000)
+        try:
+            browser.close()
+        except Exception:
+            pass
         return result
+
+
+def _record_rest_call(response: Any, rest_calls: list[dict[str, Any]]) -> None:
+    """Append a PII-free record for a Degree Explorer REST response."""
+    url = response.url
+    if "/degreeExplorer/rest/" not in url:
+        return
+    parsed = urlparse(url)
+    try:
+        headers = response.headers
+        content_type = (headers.get("content-type") or "").split(";")[0]
+        method = response.request.method
+    except Exception:
+        return
+    rest_calls.append(
+        {
+            "method": method,
+            "path": parsed.path.replace("/degreeExplorer/rest", "", 1),
+            "query_keys": sorted({key for key, _ in parse_qsl(parsed.query, keep_blank_values=True)}),
+            "status": response.status,
+            "content_type": content_type,
+        }
+    )
 
 
 def _fetch_rest_from_loaded_app(
     page: Any,
     rest_url: str | None,
-    app_url: str | None = None,
+    rest_calls: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Wait for the app to redirect itself, record REST XHRs, then fetch JSON."""
+    """Wait for the app to redirect itself, then fetch JSON in the page."""
     result: dict[str, Any] = {
         "http_status": None,
         "content_type": None,
         "json": None,
         "error_text": None,
         "final_url": page.url,
-        "rest_calls": [],
+        "rest_calls": rest_calls,
     }
-    rest_calls: list[dict[str, Any]] = []
-
-    def on_response(response: Any) -> None:
-        url = response.url
-        if "/degreeExplorer/rest/" not in url:
-            return
-        parsed = urlparse(url)
-        rest_calls.append(
-            {
-                "method": response.request.method,
-                "path": parsed.path.replace("/degreeExplorer/rest", "", 1),
-                "status": response.status,
-            }
-        )
-
-    page.on("response", on_response)
     # The real site sends / or /degreeExplorer/ to currentStatus itself.
     try:
         page.wait_for_url(
